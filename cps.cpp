@@ -195,10 +195,37 @@ string RotatedShape::generatePostScript() const {
 	return postscript;
 }
 
+/***** MultiShape *****/
+MultiShape::MultiShape(vector<shared_ptr<Shape>> shapes)
+{
+	_shapes = shapes;
+}
+
+string MultiShape::generatePostScript() const
+{
+	string postscript = "gsave ";
+
+	auto shape = _shapes.begin();
+	postscript += (*shape)->generatePostScript();
+	postscript += make_translation(*shape);
+	for (++shape; shape != _shapes.end(); ++shape)
+	{
+		postscript += make_translation(*shape);
+		postscript += (*shape)->generatePostScript();
+		postscript += make_translation(*shape);
+	}
+	postscript += "grestore ";
+	return postscript;
+}
+
+string MultiShape::make_translation(shared_ptr<Shape> shape) const
+{
+	return "";
+}
+
 /***** LayeredShape *****/
 
-LayeredShape::LayeredShape(vector<shared_ptr<Shape>> shapes) {
-	_shapes = shapes;
+LayeredShape::LayeredShape(vector<shared_ptr<Shape>> shapes):MultiShape(shapes) {
 	double width = 0;
 	double height = 0;
 	for (auto const & shape : _shapes)
@@ -212,20 +239,9 @@ LayeredShape::LayeredShape(vector<shared_ptr<Shape>> shapes) {
 	setHeight(height);
 }
 
-string LayeredShape::generatePostScript() const {
-	string postscript = "gsave ";
-	for (auto const shape : _shapes)
-	{
-		postscript += shape->generatePostScript();
-	}
-	postscript += "grestore ";
-	return postscript;
-}
-
 /***** VerticalShape *****/
 
-VerticalShape::VerticalShape(vector<shared_ptr<Shape>> shapes) {
-	_shapes = shapes;
+VerticalShape::VerticalShape(vector<shared_ptr<Shape>> shapes): MultiShape(shapes) {
 	double width = 0;
 	double height = 0;
 	for (auto const & shape : _shapes)
@@ -238,22 +254,13 @@ VerticalShape::VerticalShape(vector<shared_ptr<Shape>> shapes) {
 	setHeight(height);
 }
 
-string VerticalShape::generatePostScript() const {
-	string postscript = "gsave ";
-	for (auto iter = _shapes.begin(); iter != _shapes.end(); ++iter)
-	{
-		postscript += (*iter)->generatePostScript();
-		postscript += "0 " + to_string((*iter)->getHeight()/2) + " translate ";	
-		if (iter+1 != _shapes.end())
-			postscript += "0 " + to_string((*(iter+1))->getHeight()/2) + " translate ";	
-	}
-	postscript += "grestore ";
-	return postscript;
+string VerticalShape::make_translation(shared_ptr<Shape> shape) const {
+	return "0 " + to_string(shape->getHeight()/2) + " translate ";
 }
 
 /***** HorizontalShape *****/
 
-HorizontalShape::HorizontalShape(vector<shared_ptr<Shape>> shapes) {
+HorizontalShape::HorizontalShape(vector<shared_ptr<Shape>> shapes): MultiShape(shapes) {
 	_shapes = shapes;
 	double width = 0;
 	double height = 0;
@@ -267,17 +274,8 @@ HorizontalShape::HorizontalShape(vector<shared_ptr<Shape>> shapes) {
 	setHeight(height);
 }
 
-string HorizontalShape::generatePostScript() const {
-	string postscript = "gsave ";
-	for (auto iter = _shapes.begin(); iter != _shapes.end(); ++iter)
-	{
-		postscript += (*iter)->generatePostScript();
-		postscript += to_string((*iter)->getWidth()/2) + " 0 translate ";	
-		if (iter+1 != _shapes.end())
-			postscript += to_string((*(iter+1))->getWidth()/2) + " 0 translate ";
-	}
-	postscript += "grestore ";
-	return postscript;
+string HorizontalShape::make_translation(shared_ptr<Shape> shape) const {
+	return to_string(shape->getWidth()/2) + " 0 translate ";
 }
 
 /***** ScaledShape *****/
@@ -308,15 +306,3 @@ ShapesInShape::ShapesInShape(shared_ptr<Shape> shape, int numShapes)
 		_shapes.push_back(make_shared<ScaledShape>(shape,scale,scale));
 	}
 }
-
-string ShapesInShape::generatePostScript() const {
-	string postscript = "gsave ";
-	for (auto const & shape : _shapes)
-	{
-		postscript += shape->generatePostScript();
-	}
-	postscript += "grestore ";
-	return postscript;
-}
-
-

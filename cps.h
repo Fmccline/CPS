@@ -128,37 +128,47 @@ private:
 	int _rotation;
 };
 
+/***** MultiShape*****/
+
+class MultiShape : public Shape
+{
+public:
+	~MultiShape() = default;
+	MultiShape() = default;
+	MultiShape(vector<shared_ptr<Shape>> shapes);
+	string generatePostScript() const override;
+protected:
+	virtual string make_translation(shared_ptr<Shape> shape) const;
+	vector<shared_ptr<Shape>> _shapes;
+};
+
 /***** LayeredShape *****/
 
-class LayeredShape : public Shape
+class LayeredShape : public MultiShape
 {
 public:
 	LayeredShape(vector<shared_ptr<Shape>> shapes);
-	string generatePostScript() const override;
 private:
-	vector<shared_ptr<Shape>> _shapes;
 };
 
 /***** VerticalShape *****/
 
-class VerticalShape : public Shape
+class VerticalShape : public MultiShape
 {
 public:
 	VerticalShape(vector<shared_ptr<Shape>> shapes);
-	string generatePostScript() const override;
-private:
-	vector<shared_ptr<Shape>> _shapes;
+protected:
+	string make_translation(shared_ptr<Shape> shape) const override;
 };
 
 /***** HorizontalShape *****/
 
-class HorizontalShape : public Shape
+class HorizontalShape : public MultiShape
 {
 public:
 	HorizontalShape(vector<shared_ptr<Shape>> shapes);
-	string generatePostScript() const override;
 private:
-	vector<shared_ptr<Shape>> _shapes;
+	string make_translation(shared_ptr<Shape> shape) const override;
 };
 
 /***** Scaled Shape *****/
@@ -176,13 +186,11 @@ private:
 
 /***** Shapes In Shape *****/
 
-class ShapesInShape : public Shape
+class ShapesInShape : public MultiShape
 {
 public:
 	ShapesInShape(shared_ptr<Shape> shape, int numShapes);
-	string generatePostScript() const override;
 private:
-	vector<shared_ptr<Shape>> _shapes;
 };
 
 #endif // CPS_H_INCLUDED
